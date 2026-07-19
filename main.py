@@ -18,6 +18,21 @@ class User(db.Model):
     password_hash = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+class Product(db.Model):
+    __tablename__ = "products"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+    stock = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.CheckConstraint("price >= 0"),
+        db.CheckConstraint("stock >= 0")
+    )
+
 # Routes
 
 @app.get("/")
@@ -32,8 +47,27 @@ def health():
 def users():
     users_list = User.query.all()
     return [
-        {"id":u.id,"name":u.name,"email":u.email}
+        {
+         "id":u.id,
+         "name":u.name,
+         "email":u.email
+         }
         for u in users_list
+    ]
+
+@app.get("/products")
+def products():
+    products_list = Product.query.all()
+    return [
+        {
+         "id":p.id,
+         "name":p.name,
+         "description":p.description,
+         "price": str(p.price),
+         "stock": p.stock,
+         "created_at": p.created_at.isoformat()
+        }
+        for p in products_list
     ]
 
 
