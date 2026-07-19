@@ -47,6 +47,20 @@ class Order(db.Model):
         db.CheckConstraint("total_amount >= 0")
     )
 
+class OrderItem(db.Model):
+    __tablename__ = "order_items"
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey("orders.id"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    unit_price = db.Column(db.Numeric(10, 2), nullable=False)
+
+    __table_args__ = (
+        db.CheckConstraint("quantity > 0"),
+        db.CheckConstraint("unit_price >= 0"),
+        db.UniqueConstraint("order_id", "product_id")
+    )
+
 # Routes
 
 @app.get("/")
@@ -97,6 +111,20 @@ def orders():
          "created_at":o.created_at.isoformat()
         }
         for o in orders_list
+    ]
+
+@app.get("/test-order-items")
+def order_items():
+    order_items_list = OrderItem.query.all()
+    return [
+        {
+         "id":to.id,
+         "order_id":to.order_id,
+         "product_id":to.product_id,
+         "quantity":to.quantity,
+         "unit_price":str(to.unit_price)
+        }
+        for to in order_items_list
     ]
 
 
