@@ -33,6 +33,20 @@ class Product(db.Model):
         db.CheckConstraint("stock >= 0")
     )
 
+class Order(db.Model):
+    __tablename__ = "orders"
+    id = db.Column(db.Integer, primary_key=True)
+    public_code = db.Column(db.Text, nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    status = db.Column(db.String(100), nullable=False, default="pending")
+    total_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.CheckConstraint("status IN ('pending', 'paid', 'cancelled')"),
+        db.CheckConstraint("total_amount >= 0")
+    )
+
 # Routes
 
 @app.get("/")
@@ -70,6 +84,20 @@ def products():
         for p in products_list
     ]
 
+@app.get("/orders")
+def orders():
+    orders_list = Order.query.all()
+    return [
+        {
+         "id":o.id,
+         "public_code":o.public_code,
+         "user_id":o.user_id,
+         "status":o.status,
+         "total_amount":str(o.total_amount),
+         "created_at":o.created_at.isoformat()
+        }
+        for o in orders_list
+    ]
 
 
 
