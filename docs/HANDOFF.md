@@ -54,6 +54,10 @@ simple-ecommerce-store/
   - `POST /products` cadastra um novo produto
   - `POST /users` cadastra um novo usuário (com hash de senha via `werkzeug.security`)
   - `POST /orders` cria um pedido com itens, valida estoque, calcula total e atualiza estoque
+  - `POST /login` autentica usuário por email e senha
+  - `GET /products/<id>` consulta produto por ID
+  - `PUT /products/<id>` atualiza produto
+  - `DELETE /products/<id>` exclui produto
 
 Cada arquivo de rota usa `Blueprint` em vez de decorator direto no `app`. Os Blueprints são registrados em `app/__init__.py`.
 
@@ -119,11 +123,9 @@ ou alteração manual no SQLite.
 
 ## Próximo passo recomendado
 
-Agora que as rotas POST estão prontas, os próximos passos sugeridos (qualquer ordem):
+A API básica está completa. Próximo passo:
 
-1. **Login** (`POST /login`) — validar senha com `check_password_hash`
-2. **CRUD de produtos** — `GET /products/<id>`, `PUT /products/<id>`, `DELETE /products/<id>`
-3. **Frontend HTML/CSS/JS** consumindo a API
+1. **Frontend HTML/CSS/JS** consumindo a API
 
 O `main.py` já foi simplificado para apenas `from app import create_app; app = create_app()`. Toda a lógica está em `app/`.
 
@@ -134,14 +136,18 @@ O `main.py` já foi simplificado para apenas `from app import create_app; app = 
 - [x] `POST /products` — cadastro de produtos
 - [x] `POST /users` — cadastro de usuários com hash de senha
 - [x] `POST /orders` — criação de pedidos com itens, validação de estoque, cálculo de total e atualização de estoque
+- [x] `POST /login` — autenticação com `check_password_hash`
+- [x] `GET /products/<id>` — consulta de produto por ID
+- [x] `PUT /products/<id>` — atualização de produto
+- [x] `DELETE /products/<id>` — remoção de produto
 
 ## Próximas etapas maiores
 
 1. [x] Cadastro de produtos pela API (POST /products)
 2. [x] Cadastro de usuários com hash de senha (POST /users)
 3. [x] Criação de pedidos, itens, cálculo de total e atualização de estoque (POST /orders)
-4. [ ] Login e sessão (POST /login, check_password_hash)
-5. [ ] CRUD completo de produtos (GET /<id>, PUT, DELETE)
+4. [x] Login (POST /login, check_password_hash)
+5. [x] CRUD completo de produtos (GET /<id>, PUT, DELETE)
 6. [ ] Frontend HTML/CSS/JavaScript (depois da API estável)
 
 ## Situação do Git
