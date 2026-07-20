@@ -25,14 +25,25 @@ Leia também `docs/PLAN.md` antes de sugerir mudanças.
 - `instance/ecommerce.db` existe localmente e não deve ir para o Git.
 - `requirements.txt` contém `Flask` e `Flask-SQLAlchemy`.
 
-### Flask
+### Estrutura do projeto
 
-`main.py` já cria o Flask e configura o SQLAlchemy:
+O código foi refatorado de `main.py` único para pacote `app/`:
 
-- A aplicação usa `Flask(__name__)`.
-- A URI é `sqlite:///ecommerce.db`.
-  - No Flask-SQLAlchemy, esse caminho relativo aponta para a pasta `instance/`, portanto ele acessa `instance/ecommerce.db`.
-- O objeto `db` é criado com `SQLAlchemy()` e ligado ao Flask com `db.init_app(app)`.
+```
+simple-ecommerce-store/
+├── main.py              # só 2 linhas: from app import create_app; app = create_app()
+├── app/
+│   ├── __init__.py      # create_app(), db, registra Blueprints
+│   ├── models.py        # User, Product, Order, OrderItem
+│   └── routes/
+│       ├── general.py   # GET /, GET /health
+│       ├── products.py  # GET /products, POST /products
+│       ├── users.py     # GET /users, POST /users
+│       └── orders.py    # GET /orders, POST /orders, GET /test-order-items
+```
+
+- A URI é `sqlite:///ecommerce.db` (aponta para `instance/ecommerce.db`).
+- O objeto `db` é criado com `SQLAlchemy()` e ligado ao Flask com `db.init_app(app)` dentro de `create_app()`.
 - As rotas abaixo funcionam e foram testadas no Postman:
   - `GET /` retorna uma mensagem de que a API está rodando
   - `GET /health` retorna `{"status": "ok"}`
@@ -40,6 +51,11 @@ Leia também `docs/PLAN.md` antes de sugerir mudanças.
   - `GET /products` lista todos os produtos
   - `GET /orders` lista todos os pedidos
   - `GET /test-order-items` lista todos os itens de pedidos (rota temporária de teste)
+  - `POST /products` cadastra um novo produto
+  - `POST /users` cadastra um novo usuário (com hash de senha via `werkzeug.security`)
+  - `POST /orders` cria um pedido com itens, valida estoque, calcula total e atualiza estoque
+
+Cada arquivo de rota usa `Blueprint` em vez de decorator direto no `app`. Os Blueprints são registrados em `app/__init__.py`.
 
 Observação: iniciar o Flask sem erro valida a configuração básica. A conexão foi confirmada consultando o banco via modelos SQLAlchemy.
 
@@ -92,48 +108,48 @@ O `UNIQUE` de e-mail foi testado: uma segunda inserção com o mesmo e-mail foi 
 
 O usuário executou `PRAGMA foreign_keys = ON;` no terminal SQLite e verificou as tabelas. Importante: essa configuração vale apenas para a conexão atual; quando necessário, habilitar chaves estrangeiras também nas conexões abertas pelo Flask/SQLAlchemy.
 
-### Modelos SQLAlchemy criados no `main.py`
+### Modelos SQLAlchemy em `app/models.py`
 
-Os quatro modelos foram criados, mapeando exatamente as tabelas existentes. Nenhuma alteração foi feita no banco — os modelos apenas lêem as tabelas criadas manualmente.
+As quatro classes (User, Product, Order, OrderItem) foram movidas para
+`app/models.py`, mapeando exatamente as tabelas existentes.
 
-Modelos criados na seguinte ordem:
-
-1. **`User`** (`__tablename__ = "users"`) — colunas: id, name, email (unique), password_hash, created_at
-2. **`Product`** (`__tablename__ = "products"`) — colunas: id, name, description, price (Numeric), stock, created_at; CHECKs: price >= 0, stock >= 0
-3. **`Order`** (`__tablename__ = "orders"`) — colunas: id, public_code (unique), user_id (FK → users.id), status (default "pending"), total_amount (default 0), created_at; CHECKs: status IN ('pending','paid','cancelled'), total_amount >= 0
-4. **`OrderItem`** (`__tablename__ = "order_items"`) — colunas: id, order_id (FK → orders.id), product_id (FK → products.id), quantity, unit_price; CHECKs: quantity > 0, unit_price >= 0; UniqueConstraint(order_id, product_id)
-
-Todos os modelos foram testados via GET no Postman (retornam lista vazia ou os dados existentes).
-
-Não foi chamado `db.create_all()` em momento algum. O banco permanece compatível com os modelos. Alterações futuras de esquema exigirão migrations ou alteração manual no SQLite.
+Não foi chamado `db.create_all()` em momento algum. O banco permanece
+compatível com os modelos. Alterações futuras de esquema exigirão migrations
+ou alteração manual no SQLite.
 
 ## Próximo passo recomendado
 
-Criar rotas `POST` para cadastrar dados via API. Sugestão de ordem:
+Agora que as rotas POST estão prontas, os próximos passos sugeridos (qualquer ordem):
 
-1. **`POST /products`** — mais simples, sem dependências de outras tabelas
-2. **`POST /users`** — introduz hash de senha (usar `werkzeug.security`)
-3. **`POST /orders`** — criar pedido com itens, calcular total, validar e atualizar estoque (o mais complexo, envolve transação)
+1. **Login** (`POST /login`) — validar senha com `check_password_hash`
+2. **CRUD de produtos** — `GET /products/<id>`, `PUT /products/<id>`, `DELETE /products/<id>`
+3. **Frontend HTML/CSS/JS** consumindo a API
 
-Manter toda a lógica no `main.py` por enquanto; refatorar para `app/` somente quando o arquivo começar a crescer.
+O `main.py` já foi simplificado para apenas `from app import create_app; app = create_app()`. Toda a lógica está em `app/`.
 
 ## Etapas concluídas
 
 - [x] Modelos SQLAlchemy e consultas básicas (GET em todas as tabelas)
 - [x] Testes com Postman
+- [x] `POST /products` — cadastro de produtos
+- [x] `POST /users` — cadastro de usuários com hash de senha
+- [x] `POST /orders` — criação de pedidos com itens, validação de estoque, cálculo de total e atualização de estoque
 
 ## Próximas etapas maiores
 
-1. [ ] Cadastro e listagem de produtos pela API (POST /products)
-2. [ ] Cadastro de usuários e login básico (POST /users, hash de senha)
-3. [ ] Criação de pedidos, itens, cálculo de total e atualização de estoque
-4. [ ] Frontend HTML/CSS/JavaScript (depois da API estável)
+1. [x] Cadastro de produtos pela API (POST /products)
+2. [x] Cadastro de usuários com hash de senha (POST /users)
+3. [x] Criação de pedidos, itens, cálculo de total e atualização de estoque (POST /orders)
+4. [ ] Login e sessão (POST /login, check_password_hash)
+5. [ ] CRUD completo de produtos (GET /<id>, PUT, DELETE)
+6. [ ] Frontend HTML/CSS/JavaScript (depois da API estável)
 
 ## Situação do Git
 
-Foram feitos 4 commits nesta sessão:
+Foram feitos 5 commits até o momento:
 
 ```
+5179fd5 feat: add POST routes for products, users and orders
 b06c3b0 feat: add User model and GET /users route
 f578c9a feat: add Product model and GET /products route
 3ce066c feat: add Order model and GET /orders route
