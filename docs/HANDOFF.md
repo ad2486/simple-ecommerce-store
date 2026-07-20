@@ -23,7 +23,8 @@ Leia também `docs/PLAN.md` antes de sugerir mudanças.
 - Repositório Git criado.
 - `.gitignore` ignora `.venv/`, `instance/`, `*.db`, `.idea/`, `.env` e arquivos temporários.
 - `instance/ecommerce.db` existe localmente e não deve ir para o Git.
-- `requirements.txt` contém `Flask` e `Flask-SQLAlchemy`.
+- `requirements.txt` contém `Flask`, `Flask-SQLAlchemy` e `pytest`.
+- `pytest` instalado no `.venv`.
 
 ### Estrutura do projeto
 
@@ -33,7 +34,7 @@ O código foi refatorado de `main.py` único para pacote `app/`:
 simple-ecommerce-store/
 ├── main.py              # só 2 linhas: from app import create_app; app = create_app()
 ├── app/
-│   ├── __init__.py      # create_app(), db, registra Blueprints
+│   ├── __init__.py      # create_app(test_config=None), db, registra Blueprints
 │   ├── models.py        # User, Product, Order, OrderItem
 │   └── routes/
 │       ├── general.py   # GET /, GET /health
@@ -41,6 +42,15 @@ simple-ecommerce-store/
 │       ├── products.py  # GET /products, POST /products, GET/PUT/DELETE /products/<id>
 │       ├── users.py     # GET /users, POST /users
 │       └── orders.py    # GET /orders, POST /orders, GET /test-order-items
+├── tests/
+│   ├── __init__.py
+│   ├── conftest.py      # fixtures app (SQLite :memory:) e client
+│   └── test_products.py # 11 testes para CRUD de produtos
+└── docs/
+    ├── PLAN.md
+    ├── HANDOFF.md
+    ├── REFACTOR_APP.md
+    └── TESTS.md
 ```
 
 - A URI é `sqlite:///ecommerce.db` (aponta para `instance/ecommerce.db`).
@@ -61,6 +71,16 @@ simple-ecommerce-store/
   - `DELETE /products/<id>` exclui produto
 
 Cada arquivo de rota usa `Blueprint` em vez de decorator direto no `app`. Os Blueprints são registrados em `app/__init__.py`.
+
+`create_app()` agora aceita `test_config` opcional, usado pelos testes para
+substituir a URI do banco por `sqlite:///:memory:` e ativar `TESTING = True`.
+
+### Testes automatizados
+
+- 11 testes para o CRUD de produtos em `tests/test_products.py`
+- Usa `pytest` com banco SQLite em memória (isolado do banco real)
+- Os fixtures `app` e `client` estão em `tests/conftest.py`
+- Comando: `.venv/bin/python -m pytest tests/ -v`
 
 Observação: iniciar o Flask sem erro valida a configuração básica. A conexão foi confirmada consultando o banco via modelos SQLAlchemy.
 
@@ -124,9 +144,10 @@ ou alteração manual no SQLite.
 
 ## Próximo passo recomendado
 
-A API básica está completa. O usuário vai estudar React por conta própria antes de criar o frontend.
+A API básica está completa. Os próximos passos sugeridos:
 
-Quando voltar, o frontend (React ou HTML puro) pode consumir a API existente sem precisar mexer no backend.
+1. **Testes para users, auth e orders** — seguir o padrão de `test_products.py`
+2. **Frontend** (React ou HTML puro) — quando o usuário se sentir pronto
 
 O `main.py` já foi simplificado para apenas `from app import create_app; app = create_app()`. Toda a lógica está em `app/`.
 
@@ -141,6 +162,7 @@ O `main.py` já foi simplificado para apenas `from app import create_app; app = 
 - [x] `GET /products/<id>` — consulta de produto por ID
 - [x] `PUT /products/<id>` — atualização de produto
 - [x] `DELETE /products/<id>` — remoção de produto
+- [x] Testes automatizados com pytest (CRUD de produtos)
 
 ## Próximas etapas maiores
 
@@ -149,13 +171,15 @@ O `main.py` já foi simplificado para apenas `from app import create_app; app = 
 3. [x] Criação de pedidos, itens, cálculo de total e atualização de estoque (POST /orders)
 4. [x] Login (POST /login, check_password_hash)
 5. [x] CRUD completo de produtos (GET /<id>, PUT, DELETE)
-6. [ ] Frontend (React ou HTML/CSS/JS) — pausado enquanto o usuário estuda React
+6. [ ] Testes para users, auth e orders
+7. [ ] Frontend (React ou HTML/CSS/JS) — pausado enquanto o usuário estuda React
 
 ## Situação do Git
 
-Foram feitos 7 commits até o momento:
+Foram feitos 8 commits até o momento:
 
 ```
+7948b2b docs: update HANDOFF.md with current progress and React study plans
 aa296bf feat: add login, product CRUD and update docs
 e9b3705 refactor: migrate from single main.py to app/ package with Blueprints
 5179fd5 feat: add POST routes for products, users and orders
