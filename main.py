@@ -1,6 +1,8 @@
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from werkzeug.security import generate_password_hash
+from secrets import token_hex
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ecommerce.db"
@@ -62,6 +64,8 @@ class OrderItem(db.Model):
     )
 
 # Routes
+
+## GET routes
 
 @app.get("/")
 def home():
@@ -127,5 +131,136 @@ def order_items():
         for to in order_items_list
     ]
 
+## POST routes
 
+@app.post("/products")
+def create_product():
+    data = request.get_json()
+
+    # 1 - Extrair os campos do JSON
+    name = data.get("name")
+    description = data.get("description")
+    price = data.get("price")
+    stock = data.get("stock", 0)
+
+    # 2 - Criar o objeto Product
+    product = Product(
+        name=name,
+        description=description,
+        price=price,
+        stock=stock
+    )
+
+    # 3 - Salvar no banco
+    db.session.add(product)
+    db.session.commit()
+
+    # 4 - Retornar o produto criado com status 201
+    return {
+        "id": product.id,
+        "description": product.description,
+        "name": product.name,
+        "price": str(product.price),
+        "stock": product.stock
+    }, 201
+
+@app.post("/users")
+def create_user():
+    data = request.get_json()
+
+    # 1 - Extrair os campos do JSON
+    name = data.get("name")
+    email = data.get("email")
+    password = data.get("password")
+
+    # 2 - Verificar se possui um usuário com o mesmo email
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        return {"error": "Email already registered"}, 409
+
+    # 3 - Gerar o hash da senha
+    p_hash = generate_password_hash(password)
+
+    # 4 - Criar o objeto User
+    user = User(
+        name=name,
+        email=email,
+        password_hash=p_hash
+    )
+
+    # 5 - Salvar no banco
+    db.session.add(user)
+    db.session.commit()
+
+    # 6 - Retornar o usuário criado com status 201
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email
+    }, 201
+
+@app.post("/orders")
+def create_order():
+    data = request.get_json()
+
+    # 1 - Extrair os campos do JSON
+    user_id = data.get("user_id")
+    items = data.get("items")
+
+    # 2 - Gerar código público único
+    while True:
+        public_code = "ORD-" + token_hex(4).upper()
+        if not Order.query.filter_by(public_code=public_code).first():
+            break
+
+    # 3 - Validar se o usuário existe
+    user = User.query.get(user_id)
+    if not user:
+        return {"error": "User not found"}, 404
+
+    # 4 - Loop dos items
+    total_amount = 0
+    order_items = []
+    for item in items:
+        product_id = item.get("product_id")
+        quantity = item.get("quantity")
+        product = Product.query.get(product_id)
+        if not product:
+            return {"error": f"Product {product_id} not found"}, 404
+        if product.stock < quantity:
+            return {"error": f"Insufficient stock for product {product_id}"}, 400
+        unit_price = product.price
+        total_amount += quantity * unit_price
+        order_items.append({
+            "product": product,
+            "quantity": quantity,
+            "unit_price": unit_price
+        })
+        product.stock -= quantity
+
+    # 5 - Criar o objeto Order
+    order = Order(
+        public_code=public_code,
+        user_id=user_id,
+        total_amount=total_amount,
+    )
+    db.session.add(order)
+
+    # 6 - Criar os objetos OrderItems
+    for item_data in order_items:
+        order_item = OrderItem(
+            order_id=order.id,
+            product_id=item_data["produc"].id,
+            quantity=item_data["quantity"],
+            unit_price=item_data["unit_price"]
+        )
+        db.session.add(order_item)
+
+    # 7 - Commit geral e retorno
+    db.session.commit()
+    return {
+        "public_code": order.public_code,
+        "total_amount": str(order.total_amount),
+        "status": order.status,
+    }, 201
 
