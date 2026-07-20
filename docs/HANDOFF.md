@@ -37,7 +37,8 @@ simple-ecommerce-store/
 │   ├── models.py        # User, Product, Order, OrderItem
 │   └── routes/
 │       ├── general.py   # GET /, GET /health
-│       ├── products.py  # GET /products, POST /products
+│       ├── auth.py      # POST /login
+│       ├── products.py  # GET /products, POST /products, GET/PUT/DELETE /products/<id>
 │       ├── users.py     # GET /users, POST /users
 │       └── orders.py    # GET /orders, POST /orders, GET /test-order-items
 ```
@@ -123,9 +124,9 @@ ou alteração manual no SQLite.
 
 ## Próximo passo recomendado
 
-A API básica está completa. Próximo passo:
+A API básica está completa. O usuário vai estudar React por conta própria antes de criar o frontend.
 
-1. **Frontend HTML/CSS/JS** consumindo a API
+Quando voltar, o frontend (React ou HTML puro) pode consumir a API existente sem precisar mexer no backend.
 
 O `main.py` já foi simplificado para apenas `from app import create_app; app = create_app()`. Toda a lógica está em `app/`.
 
@@ -148,13 +149,15 @@ O `main.py` já foi simplificado para apenas `from app import create_app; app = 
 3. [x] Criação de pedidos, itens, cálculo de total e atualização de estoque (POST /orders)
 4. [x] Login (POST /login, check_password_hash)
 5. [x] CRUD completo de produtos (GET /<id>, PUT, DELETE)
-6. [ ] Frontend HTML/CSS/JavaScript (depois da API estável)
+6. [ ] Frontend (React ou HTML/CSS/JS) — pausado enquanto o usuário estuda React
 
 ## Situação do Git
 
-Foram feitos 5 commits até o momento:
+Foram feitos 7 commits até o momento:
 
 ```
+aa296bf feat: add login, product CRUD and update docs
+e9b3705 refactor: migrate from single main.py to app/ package with Blueprints
 5179fd5 feat: add POST routes for products, users and orders
 b06c3b0 feat: add User model and GET /users route
 f578c9a feat: add Product model and GET /products route
