@@ -45,7 +45,10 @@ simple-ecommerce-store/
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py      # fixtures app (SQLite :memory:) e client
-│   └── test_products.py # 11 testes para CRUD de produtos
+│   ├── test_products.py # 11 testes para CRUD de produtos
+│   ├── test_users.py    # 5 testes para CRUD de usuários
+│   ├── test_auth.py     # 3 testes para login
+│   └── test_orders.py   # 8 testes para criação e listagem de pedidos
 └── docs/
     ├── PLAN.md
     ├── HANDOFF.md
@@ -77,7 +80,11 @@ substituir a URI do banco por `sqlite:///:memory:` e ativar `TESTING = True`.
 
 ### Testes automatizados
 
-- 11 testes para o CRUD de produtos em `tests/test_products.py`
+- 27 testes no total, divididos em 4 arquivos:
+  - `tests/test_products.py` — 11 testes para CRUD de produtos
+  - `tests/test_users.py` — 5 testes para cadastro e listagem de usuários
+  - `tests/test_auth.py` — 3 testes para login (sucesso, email inexistente, senha errada)
+  - `tests/test_orders.py` — 8 testes para criação de pedidos (sucesso, validação de estoque, usuário/produto inexistente, verificação de itens)
 - Usa `pytest` com banco SQLite em memória (isolado do banco real)
 - Os fixtures `app` e `client` estão em `tests/conftest.py`
 - Comando: `.venv/bin/python -m pytest tests/ -v`
@@ -144,10 +151,9 @@ ou alteração manual no SQLite.
 
 ## Próximo passo recomendado
 
-A API básica está completa. Os próximos passos sugeridos:
+A API básica e os testes automatizados estão completos. O próximo passo sugerido:
 
-1. **Testes para users, auth e orders** — seguir o padrão de `test_products.py`
-2. **Frontend** (React ou HTML puro) — quando o usuário se sentir pronto
+1. **Frontend** (React ou HTML/CSS/JS puro) — consumir a API com uma interface visual
 
 O `main.py` já foi simplificado para apenas `from app import create_app; app = create_app()`. Toda a lógica está em `app/`.
 
@@ -163,6 +169,9 @@ O `main.py` já foi simplificado para apenas `from app import create_app; app = 
 - [x] `PUT /products/<id>` — atualização de produto
 - [x] `DELETE /products/<id>` — remoção de produto
 - [x] Testes automatizados com pytest (CRUD de produtos)
+- [x] Testes para cadastro e listagem de usuários
+- [x] Testes para login (sucesso, email inexistente, senha errada)
+- [x] Testes para criação de pedidos (sucesso, validações, estoque, itens)
 
 ## Próximas etapas maiores
 
@@ -171,7 +180,7 @@ O `main.py` já foi simplificado para apenas `from app import create_app; app = 
 3. [x] Criação de pedidos, itens, cálculo de total e atualização de estoque (POST /orders)
 4. [x] Login (POST /login, check_password_hash)
 5. [x] CRUD completo de produtos (GET /<id>, PUT, DELETE)
-6. [ ] Testes para users, auth e orders
+6. [x] Testes para users, auth e orders
 7. [ ] Frontend (React ou HTML/CSS/JS) — pausado enquanto o usuário estuda React
 
 ## Situação do Git
